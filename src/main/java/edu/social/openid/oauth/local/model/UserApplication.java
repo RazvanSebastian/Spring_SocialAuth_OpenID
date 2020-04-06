@@ -1,8 +1,11 @@
 package edu.social.openid.oauth.local.model;
 
-public class UserApplication extends UserBasicInformation {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public class UserApplication extends UserPayload {
 
     private String phone;
+    @JsonIgnore
     private String password;
 
     public UserApplication(String email) {

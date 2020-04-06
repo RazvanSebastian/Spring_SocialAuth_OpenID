@@ -1,7 +1,5 @@
 package edu.social.openid.oauth.google.model;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 public class ClientProperties {
     private String clientId;
     private String clientSecret;

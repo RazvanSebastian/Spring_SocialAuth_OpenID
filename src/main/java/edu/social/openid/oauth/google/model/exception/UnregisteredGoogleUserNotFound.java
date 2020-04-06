@@ -1,15 +1,15 @@
 package edu.social.openid.oauth.google.model.exception;
 
-import edu.social.openid.oauth.local.model.UserBasicInformation;
+import edu.social.openid.oauth.local.model.UserPayload;
 
 public class UnregisteredGoogleUserNotFound {
 
     private String message;
-    private UserBasicInformation userBasicInformation;
+    private UserPayload userPayload;
 
-    public UnregisteredGoogleUserNotFound(String message, UserBasicInformation userBasicInformation) {
+    public UnregisteredGoogleUserNotFound(String message, UserPayload userPayload) {
         this.message = message;
-        this.userBasicInformation = userBasicInformation;
+        this.userPayload = userPayload;
     }
 
     public String getMessage() {
@@ -20,11 +20,11 @@ public class UnregisteredGoogleUserNotFound {
         this.message = message;
     }
 
-    public UserBasicInformation getUserBasicInformation() {
-        return userBasicInformation;
+    public UserPayload getUserPayload() {
+        return userPayload;
     }
 
-    public void setUserBasicInformation(UserBasicInformation userBasicInformation) {
-        this.userBasicInformation = userBasicInformation;
+    public void setUserPayload(UserPayload userPayload) {
+        this.userPayload = userPayload;
     }
 }

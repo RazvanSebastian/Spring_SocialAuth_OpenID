@@ -11,7 +11,8 @@ import edu.social.openid.oauth.google.model.ClientProperties;
 import edu.social.openid.oauth.google.model.CodeExchangeResponse;
 import edu.social.openid.oauth.google.model.exception.UnregisteredGoogleUserNotFound;
 import edu.social.openid.oauth.google.util.OAuthEndpointsBuilder;
-import edu.social.openid.oauth.local.model.UserBasicInformation;
+import edu.social.openid.oauth.local.model.UserApplication;
+import edu.social.openid.oauth.local.model.UserPayload;
 import edu.social.openid.oauth.local.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -81,12 +82,12 @@ public class UserAuthenticationService {
         try {
             String accessToken = "NOT YET IMPLEMENTED";
             Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
+            UserPayload userPayload = getUserBasicInformation(claims);
             try {
-                UserBasicInformation user = userDetailsService.findUser(claims.get(EMAIL_CLAIM).asString());
+                UserApplication user = userDetailsService.findUser(userPayload);
                 return getSuccessResponse(user, accessToken);
             } catch (UserNotFoundException e) {
-                UserBasicInformation unregisteredGoogleUser = getUserBasicInformation(claims);
-                return getErrorMessage(e.getMessage(), unregisteredGoogleUser);
+                return getErrorMessage(e.getMessage(), userPayload);
             }
         } catch (JsonProcessingException e) {
             throw new ApplicationException("Invalid ID_Token received from Google OAuth API : " + e.getMessage());
@@ -99,8 +100,8 @@ public class UserAuthenticationService {
      * @param claims
      * @return
      */
-    private UserBasicInformation getUserBasicInformation(Map<String, Claim> claims) {
-        UserBasicInformation userBasicInformation = new UserBasicInformation();
+    private UserPayload getUserBasicInformation(Map<String, Claim> claims) {
+        UserPayload userBasicInformation = new UserPayload();
         userBasicInformation.setEmail(claims.get(EMAIL_CLAIM).asString());
         userBasicInformation.setFamilyName(claims.get(FAMILY_NAME_CLAIM).asString());
         userBasicInformation.setGivenName(claims.get(GIVEN_NAME_CLAIM).asString());
@@ -109,12 +110,12 @@ public class UserAuthenticationService {
         return userBasicInformation;
     }
 
-    private ResponseEntity<?> getErrorMessage(String message, UserBasicInformation userBasicInformation) {
-        UnregisteredGoogleUserNotFound response = new UnregisteredGoogleUserNotFound(message, userBasicInformation);
+    private ResponseEntity<?> getErrorMessage(String message, UserPayload userPayload) {
+        UnregisteredGoogleUserNotFound response = new UnregisteredGoogleUserNotFound(message, userPayload);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(APPLICATION_JSON).body(response);
     }
 
-    private ResponseEntity<?> getSuccessResponse(UserBasicInformation userBasicInformation, String accessToken) {
+    private ResponseEntity<?> getSuccessResponse(UserPayload userBasicInformation, String accessToken) {
         return ResponseEntity
                 .ok()
                 .header(ACCESS_TOKEN_HEADER, accessToken)

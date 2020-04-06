@@ -1,6 +1,6 @@
 package edu.social.openid.oauth.local.model;
 
-public class UserBasicInformation {
+public class UserPayload {
 
     private String email;
     private String givenName;
@@ -8,10 +8,10 @@ public class UserBasicInformation {
     private String urlPicture;
     private String locale;
 
-    public UserBasicInformation() {
+    public UserPayload() {
     }
 
-    public UserBasicInformation(String email) {
+    public UserPayload(String email) {
         this.email = email;
     }
 
