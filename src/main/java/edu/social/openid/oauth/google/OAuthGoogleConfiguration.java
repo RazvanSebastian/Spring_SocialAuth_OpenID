@@ -1,6 +1,7 @@
 package edu.social.openid.oauth.google;
 
 import edu.social.openid.oauth.google.csrf.CsrfTokenFilter;
+import edu.social.openid.oauth.google.jwt.JwtHandler;
 import edu.social.openid.oauth.google.model.AuthFlowProperties;
 import edu.social.openid.oauth.google.model.ClientProperties;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,11 @@ public class OAuthGoogleConfiguration {
         authFlowProperties.setCallbackURI(callbackUri);
         authFlowProperties.withRefreshToken(withRefreshToken);
         return authFlowProperties;
+    }
+
+    @Bean
+    public JwtHandler jwtHandler(){
+        return new JwtHandler();
     }
 
     @Bean

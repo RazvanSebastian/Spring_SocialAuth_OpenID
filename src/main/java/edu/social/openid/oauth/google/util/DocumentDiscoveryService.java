@@ -2,24 +2,20 @@ package edu.social.openid.oauth.google.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.social.openid.oauth.exception.ApplicationException;
+import edu.social.openid.oauth.google.client.OAuthGoogleClient;
 import edu.social.openid.oauth.google.model.DocumentDiscovery;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.util.stream.Collectors;
-
-import static org.springframework.http.HttpMethod.GET;
 
 @Component
 public class DocumentDiscoveryService {
@@ -27,15 +23,14 @@ public class DocumentDiscoveryService {
     private static final String DISCOVERY_URI = "https://accounts.google.com/.well-known/openid-configuration";
 
     @Autowired
-    private RestTemplate restTemplate;
+    @Qualifier("OAuthGoogleClient")
+    private OAuthGoogleClient client;
 
     @Autowired
     private ResourceLoader resourceLoader;
 
     public DocumentDiscovery getDocumentDiscovery() {
-        URI uri = URI.create(DISCOVERY_URI);
-        HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
-        ResponseEntity<DocumentDiscovery> response = restTemplate.exchange(uri, GET, entity, DocumentDiscovery.class);
+        ResponseEntity<DocumentDiscovery> response = client.getDocumentDiscovery();
         if (response.getStatusCode().is2xxSuccessful()) {
             return response.getBody();
         } else {
