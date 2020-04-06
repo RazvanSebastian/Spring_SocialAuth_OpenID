@@ -1,5 +1,6 @@
 package edu.social.openid.oauth.google.util;
 
+import edu.social.openid.oauth.google.csrf.CsrfTokenUtil;
 import edu.social.openid.oauth.google.model.AuthFlowProperties;
 import edu.social.openid.oauth.google.model.ClientProperties;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,7 +25,6 @@ public class OAuthEndpointsBuilder {
     private static final String SCOPE_PARAM = "scope";
     private static final String RESPONSE_TYPE_PARAM = "response_type";
     private static final String RESPONSE_MODE_PARAM = "response_mode";
-    private static final String STATE_PARAM = "state";
     private static final String NONCE_PARAM = "nonce";
     private static final String ACCESS_TYPE_PARAM = "access_type";
     private static final String PROMPT_PARAM = "prompt";
@@ -47,15 +47,15 @@ public class OAuthEndpointsBuilder {
      *
      * @return String uri
      */
-    public String getUserSigningEndpoint() {
+    public String getUserSigningEndpoint(String csrfToken) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(USER_SIGNING_GOOGLE_ENDPOINT)
                 .queryParam(CLIENT_ID_PARAM, clientProperties.getClientId())
                 .queryParam(REDIRECT_URI_PARAM, authFlowProperties.getCallbackURI())
                 .queryParam(SCOPE_PARAM, "openid profile email")
                 .queryParam(RESPONSE_TYPE_PARAM, "code")
                 .queryParam(RESPONSE_MODE_PARAM, "query")
-                /*TODO : CSRF implementation
-                 .queryParam(STATE_PARAM, "123") */
+                /*TODO : CSRF implementation*/
+                .queryParam(CsrfTokenUtil.getCsrfTokenQueryParam(), csrfToken)
                 .queryParam(NONCE_PARAM, RandomStringUtils.random(NONCE_LENGTH))
                 .queryParam(ACCESS_TYPE_PARAM, authFlowProperties.isRefreshToken() ? "offline" : "online")
                 .queryParam(PROMPT_PARAM, "consent");

@@ -1,8 +1,10 @@
 package edu.social.openid.oauth.google;
 
+import edu.social.openid.oauth.google.csrf.CsrfTokenFilter;
 import edu.social.openid.oauth.google.model.AuthFlowProperties;
 import edu.social.openid.oauth.google.model.ClientProperties;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,5 +36,13 @@ public class OAuthGoogleConfiguration {
         authFlowProperties.setCallbackURI(callbackUri);
         authFlowProperties.withRefreshToken(withRefreshToken);
         return authFlowProperties;
+    }
+
+    @Bean
+    public FilterRegistrationBean<CsrfTokenFilter> csrfTokenFilter() {
+        FilterRegistrationBean<CsrfTokenFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new CsrfTokenFilter());
+        registrationBean.addUrlPatterns("/api/oauth/google/auth-callback");
+        return registrationBean;
     }
 }
