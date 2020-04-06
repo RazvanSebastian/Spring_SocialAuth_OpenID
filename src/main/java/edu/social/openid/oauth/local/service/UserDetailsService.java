@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserDetailsService {
 
-    private static final UserApplication embedded = new UserApplication("razvan.parautiu@gmail.com");
+    private static final UserApplication embedded = new UserApplication(123l, "razvan.parautiu@gmail.com");
 
     public UserApplication findUser(UserPayload userPayload) throws UserNotFoundException {
         if (embedded.getEmail().equals(userPayload.getEmail())) {

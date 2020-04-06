@@ -6,7 +6,6 @@ import edu.social.openid.oauth.exception.ApplicationException;
 import edu.social.openid.oauth.exception.UserNotFoundException;
 import edu.social.openid.oauth.google.client.OAuthGoogleClient;
 import edu.social.openid.oauth.google.csrf.CsrfTokenUtil;
-import edu.social.openid.oauth.google.jwt.JwtHandler;
 import edu.social.openid.oauth.google.model.ClientProperties;
 import edu.social.openid.oauth.google.model.CodeExchangeResponse;
 import edu.social.openid.oauth.google.model.exception.UnregisteredGoogleUserNotFound;
@@ -14,6 +13,7 @@ import edu.social.openid.oauth.google.util.OAuthEndpointsBuilder;
 import edu.social.openid.oauth.local.model.UserApplication;
 import edu.social.openid.oauth.local.model.UserPayload;
 import edu.social.openid.oauth.local.service.UserDetailsService;
+import edu.social.openid.oauth.security.JwtHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -25,17 +25,12 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.Map;
 
+import static edu.social.openid.oauth.security.TokenClaims.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.util.StringUtils.isEmpty;
 
 @Service
 public class UserAuthenticationService {
-
-    private static final String EMAIL_CLAIM = "email";
-    private static final String GIVEN_NAME_CLAIM = "given_name";
-    private static final String FAMILY_NAME_CLAIM = "family_name";
-    private static final String PICTURE_CLAIM = "picture";
-    private static final String LOCALE_CLAIM = "locale";
 
     private static final String ACCESS_TOKEN_HEADER = "access_token";
 
@@ -80,11 +75,11 @@ public class UserAuthenticationService {
             throw new ApplicationException("Invalid authentication response received from Google OAuth APi = ID_TOKEN missing!");
         }
         try {
-            String accessToken = "NOT YET IMPLEMENTED";
             Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
             UserPayload userPayload = getUserBasicInformation(claims);
             try {
                 UserApplication user = userDetailsService.findUser(userPayload);
+                String accessToken = jwtHandler.generateAccessToken(user);
                 return getSuccessResponse(user, accessToken);
             } catch (UserNotFoundException e) {
                 return getErrorMessage(e.getMessage(), userPayload);
@@ -102,11 +97,11 @@ public class UserAuthenticationService {
      */
     private UserPayload getUserBasicInformation(Map<String, Claim> claims) {
         UserPayload userBasicInformation = new UserPayload();
-        userBasicInformation.setEmail(claims.get(EMAIL_CLAIM).asString());
-        userBasicInformation.setFamilyName(claims.get(FAMILY_NAME_CLAIM).asString());
-        userBasicInformation.setGivenName(claims.get(GIVEN_NAME_CLAIM).asString());
-        userBasicInformation.setUrlPicture(claims.get(PICTURE_CLAIM).asString());
-        userBasicInformation.setLocale(claims.get(LOCALE_CLAIM).asString());
+        userBasicInformation.setEmail(claims.get(EMAIL_CLAIM.getValue()).asString());
+        userBasicInformation.setFamilyName(claims.get(FAMILY_NAME_CLAIM.getValue()).asString());
+        userBasicInformation.setGivenName(claims.get(GIVEN_NAME_CLAIM.getValue()).asString());
+        userBasicInformation.setUrlPicture(claims.get(PICTURE_CLAIM.getValue()).asString());
+        userBasicInformation.setLocale(claims.get(LOCALE_CLAIM.getValue()).asString());
         return userBasicInformation;
     }
 

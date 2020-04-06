@@ -32,7 +32,7 @@ public class OAuthGoogleClient {
         return restTemplate.exchange(uri, GET, entity, DocumentDiscovery.class);
     }
 
-    public  ResponseEntity<?> exchangeCode(String code){
+    public ResponseEntity<?> exchangeCode(String code) {
         String uri = oAuthEndpointsBuilder.getTokenEndpoint(code);
         HttpEntity<?> entity = new HttpEntity<>(new HttpHeaders());
         return restTemplate.exchange(uri, POST, entity, CodeExchangeResponse.class);

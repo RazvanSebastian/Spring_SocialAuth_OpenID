@@ -4,12 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class UserApplication extends UserPayload {
 
+    private Long id;
     private String phone;
     @JsonIgnore
     private String password;
 
-    public UserApplication(String email) {
+    public UserApplication(Long id, String email) {
         super(email);
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getPhone() {

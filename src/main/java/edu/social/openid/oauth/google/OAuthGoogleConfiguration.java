@@ -1,8 +1,9 @@
 package edu.social.openid.oauth.google;
 
-import edu.social.openid.oauth.google.jwt.JwtHandler;
 import edu.social.openid.oauth.google.model.AuthFlowProperties;
 import edu.social.openid.oauth.google.model.ClientProperties;
+import edu.social.openid.oauth.security.JwtHandler;
+import edu.social.openid.oauth.security.RSAKeyPairs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,8 +39,8 @@ public class OAuthGoogleConfiguration {
     }
 
     @Bean
-    public JwtHandler jwtHandler(){
-        return new JwtHandler();
+    public JwtHandler jwtHandler(RSAKeyPairs rsaKeyPairs) {
+        return new JwtHandler(rsaKeyPairs);
     }
 
 //    @Bean
