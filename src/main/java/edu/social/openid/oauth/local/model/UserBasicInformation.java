@@ -1,4 +1,4 @@
-package edu.social.openid.oauth.google.model;
+package edu.social.openid.oauth.local.model;
 
 public class UserBasicInformation {
 
@@ -7,6 +7,13 @@ public class UserBasicInformation {
     private String familyName;
     private String urlPicture;
     private String locale;
+
+    public UserBasicInformation() {
+    }
+
+    public UserBasicInformation(String email) {
+        this.email = email;
+    }
 
     public String getEmail() {
         return email;

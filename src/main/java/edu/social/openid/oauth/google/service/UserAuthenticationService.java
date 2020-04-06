@@ -3,17 +3,22 @@ package edu.social.openid.oauth.google.service;
 import com.auth0.jwt.interfaces.Claim;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.social.openid.oauth.exception.ApplicationException;
+import edu.social.openid.oauth.exception.UserNotFoundException;
 import edu.social.openid.oauth.google.client.OAuthGoogleClient;
 import edu.social.openid.oauth.google.csrf.CsrfTokenUtil;
 import edu.social.openid.oauth.google.jwt.JwtHandler;
 import edu.social.openid.oauth.google.model.ClientProperties;
 import edu.social.openid.oauth.google.model.CodeExchangeResponse;
-import edu.social.openid.oauth.google.model.UserBasicInformation;
+import edu.social.openid.oauth.google.model.exception.UnregisteredGoogleUserNotFound;
 import edu.social.openid.oauth.google.util.OAuthEndpointsBuilder;
+import edu.social.openid.oauth.local.model.UserBasicInformation;
+import edu.social.openid.oauth.local.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
@@ -22,7 +27,7 @@ import java.util.Map;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.util.StringUtils.isEmpty;
 
-@Component
+@Service
 public class UserAuthenticationService {
 
     private static final String EMAIL_CLAIM = "email";
@@ -50,10 +55,13 @@ public class UserAuthenticationService {
     @Autowired
     private OAuthEndpointsBuilder oAuthEndpointsBuilder;
 
-    public ResponseEntity<?> getOAuthGoogleConsentEndpointResponse(){
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    public ResponseEntity<?> getOAuthGoogleConsentEndpointResponse() {
         String csrfToken = CsrfTokenUtil.generate();
         String uri = oAuthEndpointsBuilder.getUserSigningEndpoint(csrfToken);
-        Map<String,String> map = Collections.singletonMap("uri",uri);
+        Map<String, String> map = Collections.singletonMap("uri", uri);
         return ResponseEntity
                 .ok()
                 .header(CsrfTokenUtil.getCsrfTokenHeaderName(), csrfToken)
@@ -64,40 +72,31 @@ public class UserAuthenticationService {
     public ResponseEntity<?> authenticate(String code) {
         ResponseEntity<?> response = client.exchangeCode(code);
         if (!response.getStatusCode().is2xxSuccessful()) {
-            return getErrorMessage(response.getBody().toString());
+            throw new ApplicationException("The response message from OAuth Google client is " + response.getBody());
         }
         String idToken = ((CodeExchangeResponse) response.getBody()).getId_token();
         if (isEmpty(idToken)) {
-            return getErrorMessage("Invalid authentication response received from Google OAuth APi = ID_TOKEN missing!");
+            throw new ApplicationException("Invalid authentication response received from Google OAuth APi = ID_TOKEN missing!");
         }
         try {
-            Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
             String accessToken = "NOT YET IMPLEMENTED";
-            if (isAlreadyAuthenticated(claims)) {
-                //TODO : implement user verification on DB
-                UserBasicInformation userBasicInformation = new UserBasicInformation();
-                return getSuccessResponse(userBasicInformation, accessToken);
-            } else {
-                UserBasicInformation userBasicInformation = getUserBasicInformation(claims);
-                return getSuccessResponse(userBasicInformation, accessToken);
+            Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
+            try {
+                UserBasicInformation user = userDetailsService.findUser(claims.get(EMAIL_CLAIM).asString());
+                return getSuccessResponse(user, accessToken);
+            } catch (UserNotFoundException e) {
+                UserBasicInformation unregisteredGoogleUser = getUserBasicInformation(claims);
+                return getErrorMessage(e.getMessage(), unregisteredGoogleUser);
             }
         } catch (JsonProcessingException e) {
-            return getErrorMessage("Invalid ID_Token received from Google OAuth API : " + e.getMessage());
+            throw new ApplicationException("Invalid ID_Token received from Google OAuth API : " + e.getMessage());
         }
-    }
-
-    private boolean isAlreadyAuthenticated(Map<String, Claim> claims) {
-        Claim email = claims.get(EMAIL_CLAIM);
-        if (isEmpty(email)) {
-            throw new ApplicationException("Invalid ID_Token received from Google OAuth API : email claim missing!");
-        }
-        //TODO : check a database
-        return false;
     }
 
     /**
      * Used to help the user to authenticate by using claims received from Google OAuth API
      *
+     * @param claims
      * @return
      */
     private UserBasicInformation getUserBasicInformation(Map<String, Claim> claims) {
@@ -110,8 +109,9 @@ public class UserAuthenticationService {
         return userBasicInformation;
     }
 
-    private ResponseEntity<?> getErrorMessage(String message) {
-        return ResponseEntity.badRequest().body(message);
+    private ResponseEntity<?> getErrorMessage(String message, UserBasicInformation userBasicInformation) {
+        UnregisteredGoogleUserNotFound response = new UnregisteredGoogleUserNotFound(message, userBasicInformation);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(APPLICATION_JSON).body(response);
     }
 
     private ResponseEntity<?> getSuccessResponse(UserBasicInformation userBasicInformation, String accessToken) {
