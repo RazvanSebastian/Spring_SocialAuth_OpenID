@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -26,6 +28,17 @@ public class ApplicationConfiguration {
     @Bean
     public RSAKeyPairs rsaKeyPairs() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         return new RSAKeyPairs(resourceLoader);
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:3000");
+            }
+        };
     }
 
 }

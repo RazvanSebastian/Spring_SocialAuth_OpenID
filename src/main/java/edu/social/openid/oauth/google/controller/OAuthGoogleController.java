@@ -20,7 +20,7 @@ public class OAuthGoogleController {
      *
      * @return
      */
-    @GetMapping("/auth")
+    @GetMapping("/auth-uri")
     public ResponseEntity<?> getAuthenticationGoogleConsentEndpoint() {
         return userAuthenticationService.getOAuthGoogleConsentEndpointResponse();
     }
@@ -32,8 +32,8 @@ public class OAuthGoogleController {
      * @param code
      * @return
      */
-    @GetMapping("/auth-callback")
-    public ResponseEntity<?> getAuthCallback(@RequestParam(value = "code", required = true) String code) {
+    @GetMapping("/token-exchange")
+    public ResponseEntity<?> exchangeCodeForToken(@RequestParam(value = "code", required = true) String code) {
         return userAuthenticationService.authenticate(code);
     }
 
