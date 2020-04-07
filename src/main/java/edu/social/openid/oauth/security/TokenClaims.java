@@ -6,7 +6,7 @@ public enum TokenClaims {
     FAMILY_NAME_CLAIM("family_name"),
     PICTURE_CLAIM("picture"),
     PHONE_CLAIM("phone"),
-    LOCALE_CLAIM("picture");
+    LOCALE_CLAIM("locale");
 
     private String value;
 

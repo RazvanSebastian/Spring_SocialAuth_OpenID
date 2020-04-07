@@ -15,7 +15,7 @@ import java.net.URI;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
-@Component("OAuthGoogleClient")
+@Component
 public class OAuthGoogleClient {
 
     private static final String GOOGLE_DISCOVERY_URI = "https://accounts.google.com/.well-known/openid-configuration";

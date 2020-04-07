@@ -12,12 +12,10 @@ import edu.social.openid.oauth.google.model.exception.UnregisteredGoogleUserNotF
 import edu.social.openid.oauth.google.util.OAuthEndpointsBuilder;
 import edu.social.openid.oauth.local.model.UserApplication;
 import edu.social.openid.oauth.local.model.UserPayload;
-import edu.social.openid.oauth.local.service.UserDetailsService;
 import edu.social.openid.oauth.security.JwtHandler;
+import edu.social.openid.oauth.security.service.IUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +24,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static edu.social.openid.oauth.security.TokenClaims.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.util.StringUtils.isEmpty;
 
@@ -42,7 +41,6 @@ public class UserAuthenticationService {
     private RestTemplate restTemplate;
 
     @Autowired
-    @Qualifier("OAuthGoogleClient")
     private OAuthGoogleClient client;
 
     @Autowired
@@ -52,7 +50,7 @@ public class UserAuthenticationService {
     private OAuthEndpointsBuilder oAuthEndpointsBuilder;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private IUserDetailsService userDetailsService;
 
     public ResponseEntity<?> getOAuthGoogleConsentEndpointResponse() {
         String csrfToken = CsrfTokenUtil.generate();
@@ -75,12 +73,11 @@ public class UserAuthenticationService {
             throw new ApplicationException("Invalid authentication response received from Google OAuth APi = ID_TOKEN missing!");
         }
         try {
-            Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
-            UserPayload userPayload = getUserBasicInformation(claims);
+            UserPayload userPayload = parseToUserPayload(idToken);
             try {
-                UserApplication user = userDetailsService.findUser(userPayload);
+                UserApplication user = (UserApplication) userDetailsService.findUser(userPayload);
                 String accessToken = jwtHandler.generateAccessToken(user);
-                return getSuccessResponse(user, accessToken);
+                return getSuccessResponse(accessToken);
             } catch (UserNotFoundException e) {
                 return getErrorMessage(e.getMessage(), userPayload);
             }
@@ -89,33 +86,27 @@ public class UserAuthenticationService {
         }
     }
 
-    /**
-     * Used to help the user to authenticate by using claims received from Google OAuth API
-     *
-     * @param claims
-     * @return
-     */
-    private UserPayload getUserBasicInformation(Map<String, Claim> claims) {
-        UserPayload userBasicInformation = new UserPayload();
-        userBasicInformation.setEmail(claims.get(EMAIL_CLAIM.getValue()).asString());
-        userBasicInformation.setFamilyName(claims.get(FAMILY_NAME_CLAIM.getValue()).asString());
-        userBasicInformation.setGivenName(claims.get(GIVEN_NAME_CLAIM.getValue()).asString());
-        userBasicInformation.setUrlPicture(claims.get(PICTURE_CLAIM.getValue()).asString());
-        userBasicInformation.setLocale(claims.get(LOCALE_CLAIM.getValue()).asString());
-        return userBasicInformation;
+    private UserPayload parseToUserPayload(String idToken) throws JsonProcessingException {
+        Map<String, Claim> claims = jwtHandler.extractClaims(idToken);
+        UserPayload userPayload = new UserPayload()
+                .setEmail(claims.get(EMAIL_CLAIM.getValue()).asString())
+                .setFamilyName(claims.get(FAMILY_NAME_CLAIM.getValue()).asString())
+                .setGivenName(claims.get(GIVEN_NAME_CLAIM.getValue()).asString())
+                .setUrlPicture(claims.get(PICTURE_CLAIM.getValue()).asString())
+                .setLocale(claims.get(LOCALE_CLAIM.getValue()).asString());
+        return userPayload;
     }
 
     private ResponseEntity<?> getErrorMessage(String message, UserPayload userPayload) {
         UnregisteredGoogleUserNotFound response = new UnregisteredGoogleUserNotFound(message, userPayload);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(APPLICATION_JSON).body(response);
+        return ResponseEntity.status(BAD_REQUEST).contentType(APPLICATION_JSON).body(response);
     }
 
-    private ResponseEntity<?> getSuccessResponse(UserPayload userBasicInformation, String accessToken) {
+    private ResponseEntity<?> getSuccessResponse(String accessToken) {
         return ResponseEntity
                 .ok()
                 .header(ACCESS_TOKEN_HEADER, accessToken)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(userBasicInformation);
+                .body("");
     }
 
 }

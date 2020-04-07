@@ -19,39 +19,44 @@ public class UserPayload {
         return email;
     }
 
-    public void setEmail(String email) {
+    public UserPayload setEmail(String email) {
         this.email = email;
+        return this;
     }
 
     public String getGivenName() {
         return givenName;
     }
 
-    public void setGivenName(String givenName) {
+    public UserPayload setGivenName(String givenName) {
         this.givenName = givenName;
+        return this;
     }
 
     public String getFamilyName() {
         return familyName;
     }
 
-    public void setFamilyName(String familyName) {
+    public UserPayload setFamilyName(String familyName) {
         this.familyName = familyName;
+        return this;
     }
 
     public String getUrlPicture() {
         return urlPicture;
     }
 
-    public void setUrlPicture(String urlPicture) {
+    public UserPayload setUrlPicture(String urlPicture) {
         this.urlPicture = urlPicture;
+        return this;
     }
 
     public String getLocale() {
         return locale;
     }
 
-    public void setLocale(String locale) {
+    public UserPayload setLocale(String locale) {
         this.locale = locale;
+        return this;
     }
 }
